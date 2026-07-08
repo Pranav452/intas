@@ -9,11 +9,13 @@ import { fmt, fmtDateShort, type ShipmentWithStatus } from "@/lib/stats"
 import { cn } from "@/lib/utils"
 
 const STATUS_TABS: (Status | "all")[] = ["all", "arrived", "in-transit", "booked"]
+const PAGE_SIZE = 15
 
 export function ShipmentsTable({ shipments }: { shipments: ShipmentWithStatus[] }) {
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState<Status | "all">("all")
   const [airline, setAirline] = useState("all")
+  const [page, setPage] = useState(0)
 
   const airlines = useMemo(() => [...new Set(shipments.map((s) => s.airline))].sort(), [shipments])
 
@@ -35,6 +37,10 @@ export function ShipmentsTable({ shipments }: { shipments: ShipmentWithStatus[] 
     })
   }, [shipments, query, status, airline])
 
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount - 1)
+  const pageRows = rows.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b-2 border-ink pb-3">
@@ -50,7 +56,7 @@ export function ShipmentsTable({ shipments }: { shipments: ShipmentWithStatus[] 
             {STATUS_TABS.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setStatus(tab)}
+                onClick={() => { setStatus(tab); setPage(0); }}
                 className={cn(
                   "border-b-2 pb-1 transition-colors",
                   status === tab
@@ -65,7 +71,7 @@ export function ShipmentsTable({ shipments }: { shipments: ShipmentWithStatus[] 
 
           <select
             value={airline}
-            onChange={(e) => setAirline(e.target.value)}
+            onChange={(e) => { setAirline(e.target.value); setPage(0); }}
             className="border-0 border-b border-ink/40 bg-transparent pb-1 text-xs focus:border-stamp focus:outline-none"
             aria-label="Filter by airline"
           >
@@ -79,7 +85,7 @@ export function ShipmentsTable({ shipments }: { shipments: ShipmentWithStatus[] 
 
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setPage(0); }}
             placeholder="Search AWB, invoice, consignee…"
             className="w-56 border-0 border-b border-ink/40 bg-transparent pb-1 text-xs placeholder:text-muted-foreground/60 focus:border-stamp focus:outline-none"
           />
@@ -103,10 +109,10 @@ export function ShipmentsTable({ shipments }: { shipments: ShipmentWithStatus[] 
             </tr>
           </thead>
           <tbody>
-            {rows.map((s) => {
+            {pageRows.map((s) => {
               const dest = destination(s.destination)
               return (
-                <tr key={s.awb} className="border-b border-rule align-baseline transition-colors hover:bg-ink/[0.03]">
+                <tr key={s.awb + s.awbDate} className="border-b border-rule align-baseline transition-colors hover:bg-ink/[0.03]">
                   <td className="py-2.5 pr-3">
                     <div className="font-mono text-xs font-semibold">{s.awb}</div>
                     <div className="text-[10px] text-muted-foreground">{airlineName(s.airline)}</div>
@@ -143,7 +149,7 @@ export function ShipmentsTable({ shipments }: { shipments: ShipmentWithStatus[] 
                     {s.egmNo ? (
                       <span className="text-[10px] font-semibold tracking-[0.14em] text-ink/70 uppercase">Filed</span>
                     ) : (
-                      <span className="text-[10px] font-semibold tracking-[0.14em] text-stamp uppercase">Pending</span>
+                      <span className="text-[10px] text-muted-foreground/50">—</span>
                     )}
                   </td>
                   <td className="py-2.5">
@@ -152,7 +158,7 @@ export function ShipmentsTable({ shipments }: { shipments: ShipmentWithStatus[] 
                 </tr>
               )
             })}
-            {rows.length === 0 && (
+            {pageRows.length === 0 && (
               <tr>
                 <td colSpan={10} className="py-10 text-center text-xs tracking-[0.14em] text-muted-foreground uppercase">
                   No entries match the current filters.
@@ -162,6 +168,33 @@ export function ShipmentsTable({ shipments }: { shipments: ShipmentWithStatus[] 
           </tbody>
         </table>
       </div>
+
+      {pageCount > 1 && (
+        <div className="mt-4 flex items-center justify-between border-t border-rule pt-3">
+          <span className="text-[10px] tracking-[0.18em] text-muted-foreground uppercase tabular-nums">
+            Entries {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, rows.length)} of {rows.length}
+          </span>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setPage(Math.max(0, safePage - 1))}
+              disabled={safePage === 0}
+              className="border-b-2 border-transparent pb-0.5 text-[11px] font-semibold tracking-[0.16em] uppercase transition-colors hover:border-stamp disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              ← Prev
+            </button>
+            <span className="font-serif text-sm font-bold tabular-nums">
+              {safePage + 1} / {pageCount}
+            </span>
+            <button
+              onClick={() => setPage(Math.min(pageCount - 1, safePage + 1))}
+              disabled={safePage >= pageCount - 1}
+              className="border-b-2 border-transparent pb-0.5 text-[11px] font-semibold tracking-[0.16em] uppercase transition-colors hover:border-stamp disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

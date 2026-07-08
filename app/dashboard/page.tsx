@@ -2,10 +2,12 @@ import type { Metadata } from "next"
 
 import { AirGlobe } from "@/components/air-globe"
 import { InkBars, InkColumns, Kicker, SectionHead } from "@/components/ledger"
+import { PeriodFilter } from "@/components/period-filter"
 import { ShipmentsTable } from "@/components/shipments-table"
 import { SiteHeader } from "@/components/site-header"
 import { StatusBadge } from "@/components/status-badge"
 import { airlineName, titleCase } from "@/lib/airports"
+import { availablePeriods, inPeriod, periodFromSearchParams, periodLabel } from "@/lib/period"
 import { computeStats, fmt, fmtDate, fmtDateShort } from "@/lib/stats"
 import { loadDataset } from "@/lib/store"
 
@@ -15,9 +17,16 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic"
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string; month?: string }>
+}) {
+  const period = periodFromSearchParams(await searchParams)
   const dataset = await loadDataset()
-  const stats = computeStats(dataset.shipments, dataset.asOf)
+  const periods = availablePeriods(dataset.shipments.map((s) => s.awbDate))
+  const filtered = dataset.shipments.filter((s) => inPeriod(s.awbDate, period))
+  const stats = computeStats(filtered, dataset.asOf)
   const t = stats.totals
   const byStatus = Object.fromEntries(stats.statusCounts.map((s) => [s.status, s]))
 
@@ -25,6 +34,11 @@ export default async function DashboardPage() {
   const hubSentence =
     topHubs.length > 1 ? `${topHubs.slice(0, -1).join(", ")} and ${topHubs.at(-1)}` : (topHubs[0] ?? "direct services")
   const countries = stats.byCountry.length
+  const originCities = stats.byOrigin.map((o) => o.name.replace(/\s*\([A-Z]{3}\)$/, ""))
+  const originSentence =
+    originCities.length > 1
+      ? `${originCities.slice(0, -1).join(", ")} and ${originCities.at(-1)}`
+      : (originCities[0] ?? "India")
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -34,7 +48,12 @@ export default async function DashboardPage() {
         {/* Lede spread */}
         <div className="grid gap-10 border-b border-rule py-10 lg:grid-cols-[1.3fr_0.7fr]">
           <div>
-            <Kicker>This period, by air · as of {fmtDate(stats.asOf)}</Kicker>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <Kicker>
+                {periodLabel(period)}, by air · as of {fmtDate(stats.asOf)}
+              </Kicker>
+              <PeriodFilter periods={periods} year={period.year} month={period.month} />
+            </div>
             <div className="mt-3 font-serif text-7xl leading-[0.9] font-bold tracking-tight tabular-nums sm:text-8xl lg:text-9xl">
               {fmt(t.chargeableWt)}
               <span className="ml-3 align-middle font-serif text-2xl font-normal text-muted-foreground">
@@ -42,7 +61,7 @@ export default async function DashboardPage() {
               </span>
             </div>
             <p className="mt-6 max-w-[60ch] font-serif text-[17px] leading-[1.75] text-ink/85">
-              {fmt(t.shipments)} air waybills lifted out of Mumbai and Delhi for {t.consignees}{" "}
+              {fmt(t.shipments)} air waybills lifted out of {originSentence} for {t.consignees}{" "}
               pharmaceutical consignees — {fmt(t.pkgs)} packages weighing {fmt(t.grossWt)} kg gross,
               routed via {hubSentence} to {t.destinations} airports across {countries} countries.{" "}
               {t.egmPending > 0 ? (
@@ -164,7 +183,7 @@ export default async function DashboardPage() {
             <SectionHead right="latest first">Movements</SectionHead>
             <div className="flex flex-col">
               {stats.flightsBoard.slice(0, 8).map((f) => (
-                <div key={f.awb} className="grid grid-cols-[64px_1fr_auto] items-baseline gap-4 border-b border-rule py-3">
+                <div key={f.awb + (f.awbDate ?? '')} className="grid grid-cols-[64px_1fr_auto] items-baseline gap-4 border-b border-rule py-3">
                   <span className="font-serif text-lg leading-none font-bold">{fmtDateShort(f.etd)}</span>
                   <div className="min-w-0">
                     <div className="truncate text-[13px]">
@@ -182,13 +201,16 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div>
-            <SectionHead right="chargeable kg · Mon weeks">Weekly uplift</SectionHead>
+            {/* month selected → weekly detail; otherwise monthly so 2.5 years stays readable */}
+            <SectionHead right={period.month !== null ? "chargeable kg · Mon weeks" : "chargeable kg · by month"}>
+              {period.month !== null ? "Weekly uplift" : "Monthly uplift"}
+            </SectionHead>
             <InkColumns
               height={150}
-              items={stats.weeklyChargeable.map((w) => ({
+              items={(period.month !== null ? stats.weeklyChargeable : stats.monthlyChargeable).map((w) => ({
                 label: w.label,
                 value: w.chargeableWt,
-                hint: `Wk of ${w.label} · ${fmt(w.chargeableWt)} kg · ${w.shipments} AWB`,
+                hint: `${w.label} · ${fmt(w.chargeableWt)} kg · ${w.shipments} AWB`,
               }))}
             />
             <div className="mt-6 border-t-2 border-ink pt-4">

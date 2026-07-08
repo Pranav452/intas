@@ -74,11 +74,18 @@ export function InkColumns({
         ))}
       </div>
       <div className="mt-1.5 flex gap-[6px]">
-        {items.map((item, i) => (
-          <span key={`${item.label}-${i}`} className="flex-1 text-center text-[10px] text-muted-foreground tabular-nums">
-            {item.label}
-          </span>
-        ))}
+        {items.map((item, i) => {
+          // with many columns, label every Nth to stop overflow
+          const every = Math.max(1, Math.ceil(items.length / 12))
+          return (
+            <span
+              key={`${item.label}-${i}`}
+              className="min-w-0 flex-1 overflow-hidden text-center text-[10px] whitespace-nowrap text-muted-foreground tabular-nums"
+            >
+              {i % every === 0 ? item.label : ""}
+            </span>
+          )
+        })}
       </div>
     </div>
   )

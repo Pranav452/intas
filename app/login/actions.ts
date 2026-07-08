@@ -9,6 +9,7 @@ import {
   audit,
   checkDevice,
   clearFailures,
+  createIpRequest,
   createSessionToken,
   ipAllowedForClient,
   rateLimited,
@@ -19,6 +20,8 @@ import {
 
 export interface LoginState {
   error?: string
+  ipBlocked?: boolean
+  blockedIp?: string
 }
 
 export async function login(_prev: LoginState, formData: FormData): Promise<LoginState> {
@@ -46,7 +49,11 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   if (verified.role === "client") {
     if (!(await ipAllowedForClient(ip))) {
       await audit("login-blocked-ip", { user })
-      return { error: "This network is not authorised for the INTAS portal. Contact LINKS." }
+      return {
+        error: "This network is not authorised for the INTAS portal yet.",
+        ipBlocked: true,
+        blockedIp: ip,
+      }
     }
     const device = await checkDevice(deviceId || undefined)
     if (!device.ok) {
@@ -92,4 +99,25 @@ export async function logout(): Promise<void> {
   cookieStore.delete(SESSION_COOKIE)
   await audit("logout")
   redirect("/")
+}
+
+export interface IpRequestState {
+  error?: string
+  success?: boolean
+}
+
+export async function requestIpAccess(_prev: IpRequestState, formData: FormData): Promise<IpRequestState> {
+  const user = String(formData.get("user") ?? "").trim()
+  const note = String(formData.get("note") ?? "").trim().slice(0, 300)
+  if (!user) {
+    return { error: "Enter your login ID above first, then request access." }
+  }
+  const { ip, userAgent } = await requestIdentity()
+  try {
+    await createIpRequest(user, ip, userAgent, note || null)
+    await audit("ip-access-requested", { user, ip })
+    return { success: true }
+  } catch {
+    return { error: "Could not submit the request. Try again in a moment." }
+  }
 }

@@ -50,7 +50,7 @@ export interface AirLane {
 }
 
 export interface GlobeArc {
-  origin: "MUMBAI" | "DELHI"
+  origin: "MUMBAI" | "DELHI" | "AHMEDABAD"
   coords: [number, number]
   weight: number
 }
@@ -77,6 +77,7 @@ export interface DashboardStats {
   byOrigin: NamedValue[]
   byHub: NamedValue[]
   weeklyChargeable: { label: string; chargeableWt: number; pkgs: number; shipments: number }[]
+  monthlyChargeable: { label: string; chargeableWt: number; pkgs: number; shipments: number }[]
   dailyTimeline: { label: string; value: number; hint: string }[]
   lanes: AirLane[]
   globeArcs: GlobeArc[]
@@ -107,7 +108,11 @@ export function computeStats(shipments: Shipment[] = SHIPMENTS, asOf: string = D
     invoices: withStatus.reduce((a, s) => a + s.invoices.length, 0),
     destinations: new Set(withStatus.map((s) => s.destination)).size,
     consignees: new Set(withStatus.map((s) => s.consignee)).size,
-    egmPending: withStatus.filter((s) => !s.egmNo && s.etd && s.etd <= asOf).length,
+    // EGM pending only means something when the sheet tracks EGM at all —
+    // the full DSR export has no EGM columns, so report 0 rather than "all pending".
+    egmPending: withStatus.some((s) => s.egmNo)
+      ? withStatus.filter((s) => !s.egmNo && s.etd && s.etd <= asOf).length
+      : 0,
     avgTransitDays: 0,
   }
 
@@ -198,6 +203,23 @@ export function computeStats(shipments: Shipment[] = SHIPMENTS, asOf: string = D
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([wk, v]) => ({ label: fmtDateShort(wk), ...v, chargeableWt: Math.round(v.chargeableWt) }))
 
+  const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  const monthMap = new Map<string, { chargeableWt: number; pkgs: number; shipments: number }>()
+  for (const s of withStatus) {
+    const key = s.awbDate.slice(0, 7)
+    const entry = monthMap.get(key) ?? { chargeableWt: 0, pkgs: 0, shipments: 0 }
+    entry.chargeableWt += chg(s)
+    entry.pkgs += s.pkgs
+    entry.shipments += 1
+    monthMap.set(key, entry)
+  }
+  const monthlyChargeable = [...monthMap.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([ym, v]) => {
+      const [y, m] = ym.split("-").map(Number)
+      return { label: `${MONTH_ABBR[m - 1]} ${String(y).slice(2)}`, ...v, chargeableWt: Math.round(v.chargeableWt) }
+    })
+
   const dayMap = new Map<string, { wt: number; shipments: number }>()
   for (const s of withStatus) {
     const entry = dayMap.get(s.awbDate) ?? { wt: 0, shipments: 0 }
@@ -259,6 +281,7 @@ export function computeStats(shipments: Shipment[] = SHIPMENTS, asOf: string = D
     byOrigin,
     byHub,
     weeklyChargeable,
+    monthlyChargeable,
     dailyTimeline,
     lanes,
     globeArcs,

@@ -12,7 +12,7 @@ const SKY: [number, number, number] = [228 / 255, 87 / 255, 46 / 255]
 export interface GlobeLane {
   coords: [number, number]
   weight: number
-  origin: "MUMBAI" | "DELHI"
+  origin: "MUMBAI" | "DELHI" | "AHMEDABAD"
 }
 
 // Decorative markers for the public landing page — generic cargo airports only.
@@ -77,9 +77,9 @@ export function AirGlobe({ className, lanes }: { className?: string; lanes?: Glo
 
     if (currentLanes && currentLanes.length > 0) {
       const maxWeight = Math.max(...currentLanes.map((l) => l.weight), 1)
+      const usedOrigins = [...new Set(currentLanes.map((l) => l.origin))]
       options.markers = [
-        { location: ORIGINS.MUMBAI.coords, size: 0.08 },
-        { location: ORIGINS.DELHI.coords, size: 0.05 },
+        ...usedOrigins.map((o, i) => ({ location: ORIGINS[o].coords, size: i === 0 ? 0.08 : 0.05 })),
         ...currentLanes.map((lane) => ({
           location: lane.coords,
           size: 0.03 + 0.05 * (lane.weight / maxWeight),

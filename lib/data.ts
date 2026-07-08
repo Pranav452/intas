@@ -16,7 +16,7 @@ export interface Shipment {
   date: string // MONTH column (booking/invoice date)
   invoices: string[]
   consignee: string
-  origin: "MUMBAI" | "DELHI"
+  origin: "MUMBAI" | "DELHI" | "AHMEDABAD"
   destination: string // DESTINATION PORT as in sheet (keys lib/airports.ts)
   pkgs: number
   grossWt: number // kg
@@ -98,7 +98,7 @@ export const SHIPMENTS: Shipment[] = [
   },
   {
     sr: 5, date: "2026-06-04", invoices: ["4026101856"], consignee: "TERAPIA S.A",
-    origin: "MUMBAI", destination: "OTOPENI", pkgs: 18, grossWt: 2674.8, chargeableWt: 3458,
+    origin: "MUMBAI", destination: "BUCHAREST", pkgs: 18, grossWt: 2674.8, chargeableWt: 3458,
     airline: "TK", awb: "235-36086724", hawb: [], awbDate: "2026-06-04",
     legs: [
       { carrier: "TK", flightNo: "6111", date: "2026-06-06", to: "IST" },

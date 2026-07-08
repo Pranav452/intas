@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Database, Fingerprint, History, Network, ScrollText, UploadCloud } from "lucide-react"
+import { Database, Fingerprint, History, Inbox, Network, ScrollText, UploadCloud } from "lucide-react"
 
 import { BarChartCard } from "@/components/charts/bar-chart-card"
 import { Badge } from "@/components/ui/badge"
@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { SiteHeader } from "@/components/site-header"
-import { listAllowedIps, listDevices, recentAuditRows, requestIdentity } from "@/lib/auth"
+import { listAllowedIps, listDevices, listIpRequests, recentAuditRows, requestIdentity } from "@/lib/auth"
 import { dbEnabled } from "@/lib/db"
 import { fmt, fmtDate, fmtDateShort } from "@/lib/stats"
 import { listVersions, loadDataset } from "@/lib/store"
-import { addAllowedIp, deleteAllowedIp, deleteDevice, rollbackToVersion } from "./actions"
+import { addAllowedIp, deleteAllowedIp, deleteDevice, resolveIpRequestAction, rollbackToVersion } from "./actions"
 
 export const metadata: Metadata = {
   title: "Admin · INTAS DSR by LINKS",
@@ -34,13 +34,14 @@ function SectionTitle({ icon, title, hint }: { icon: React.ReactNode; title: str
 
 export default async function AdminPage() {
   const enabled = dbEnabled()
-  const [versions, ips, devices, log, dataset, identity] = await Promise.all([
+  const [versions, ips, devices, log, dataset, identity, ipRequests] = await Promise.all([
     listVersions(),
     listAllowedIps(),
     listDevices(),
     recentAuditRows(30),
     loadDataset(),
     requestIdentity(),
+    listIpRequests("pending"),
   ])
 
   const timeline = [...versions].reverse().map((v) => ({
@@ -183,6 +184,56 @@ export default async function AdminPage() {
             </div>
           )}
         </Card>
+
+        {/* Access requests */}
+        {ipRequests.length > 0 && (
+          <Card className="mb-4 gap-4 rounded-2xl border-stamp/30 bg-stamp/[0.04] p-6 shadow-xs">
+            <SectionTitle icon={<Inbox />} title="Access requests" hint={`${ipRequests.length} pending`} />
+            <div className="flex flex-col gap-2">
+              {ipRequests.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex flex-col gap-2 rounded-xl border border-black/[0.06] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-2 text-xs">
+                      <span className="font-medium">{r.username}</span>
+                      <code className="rounded bg-black/[0.05] px-1.5 py-0.5 text-[11px]">{r.ip}</code>
+                      <span className="text-muted-foreground">
+                        {new Date(r.requested_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                      </span>
+                    </div>
+                    {r.note && <p className="mt-1 truncate text-[11px] text-muted-foreground">"{r.note}"</p>}
+                    {r.user_agent && (
+                      <p className="mt-0.5 truncate text-[10px] text-muted-foreground/60">{r.user_agent}</p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <form action={resolveIpRequestAction}>
+                      <input type="hidden" name="id" value={r.id} />
+                      <input type="hidden" name="action" value="approve" />
+                      <Button type="submit" size="sm" className="h-7 rounded-full bg-ink px-3 text-[11px] text-white hover:bg-ink/85">
+                        Approve
+                      </Button>
+                    </form>
+                    <form action={resolveIpRequestAction}>
+                      <input type="hidden" name="id" value={r.id} />
+                      <input type="hidden" name="action" value="deny" />
+                      <Button
+                        type="submit"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 rounded-full px-3 text-[11px] text-muted-foreground hover:text-destructive"
+                      >
+                        Deny
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
         <div className="mb-4 grid gap-4 lg:grid-cols-2">
           {/* IP allowlist */}
