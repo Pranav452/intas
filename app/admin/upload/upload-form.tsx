@@ -76,7 +76,7 @@ export function UploadForm({ today }: { today: string }) {
           </span>
         </div>
         {commitState.warnings && commitState.warnings.length > 0 && (
-          <ul className="max-h-40 overflow-auto rounded-xl border border-ink/[0.1] bg-card p-3 text-[11px] leading-relaxed text-muted-foreground">
+          <ul data-lenis-prevent className="max-h-40 overflow-auto rounded-xl border border-ink/[0.1] bg-card p-3 text-[11px] leading-relaxed text-muted-foreground">
             {commitState.warnings.map((w, i) => (
               <li key={i}>· {w}</li>
             ))}
@@ -211,7 +211,7 @@ export function UploadForm({ today }: { today: string }) {
               {(state.ai?.explanations.length ?? 0) > 0 && (
                 <>
                   <Separator className="bg-ink/[0.1]" />
-                  <div className="flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
+                  <div data-lenis-prevent className="flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
                     {state.ai!.explanations.map((e, i) => (
                       <div key={i} className="rounded-r-lg border-l-2 border-stamp/60 bg-stamp/[0.04] px-3 py-2">
                         <div className="flex items-start gap-1.5 text-[11.5px] font-medium">
@@ -243,7 +243,7 @@ export function UploadForm({ today }: { today: string }) {
                 <TriangleAlert className="h-3.5 w-3.5 text-stamp" />
                 {state.report.warnings.length} data warnings
               </div>
-              <ul className="max-h-40 overflow-auto rounded-xl border border-ink/[0.1] bg-card p-3 text-[11px] leading-relaxed text-muted-foreground">
+              <ul data-lenis-prevent className="max-h-40 overflow-auto rounded-xl border border-ink/[0.1] bg-card p-3 text-[11px] leading-relaxed text-muted-foreground">
                 {state.report.warnings.map((w, i) => (
                   <li key={i}>· {w}</li>
                 ))}
