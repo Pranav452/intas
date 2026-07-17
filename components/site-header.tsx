@@ -1,6 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 
+import { AnimatedThemeToggle } from "@/components/theme-toggle"
 import { logout } from "@/app/login/actions"
 import { getSession } from "@/lib/auth"
 import { fmtDate } from "@/lib/stats"
@@ -27,8 +28,8 @@ export async function SiteHeader() {
             <Image src="/links-logo.png" alt="LINKS" width={56} height={22} className="h-4.5 w-auto" priority />
           </span>
           <span className="flex flex-col leading-none">
-            <span className="font-serif text-[22px] font-bold tracking-tight">
-              The INTAS <em className="text-stamp">Air Ledger</em>
+            <span className="font-serif text-[22px] font-bold tracking-tight text-ink">
+              The INTAS Air Ledger
             </span>
             <span className="mt-1 text-[9px] tracking-[0.3em] text-muted-foreground uppercase">by LINKS</span>
           </span>
@@ -63,6 +64,7 @@ export async function SiteHeader() {
           )}
 
           <div className="flex items-center gap-3">
+            <AnimatedThemeToggle className="border border-ink/25 text-ink hover:border-stamp hover:text-stamp" />
             {session && dataset && (
               <span className="hidden -rotate-2 border-2 border-stamp px-2.5 py-1 text-[10px] font-bold tracking-[0.16em] text-stamp uppercase select-none md:inline-block">
                 As of {fmtDate(dataset.asOf)}

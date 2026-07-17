@@ -31,13 +31,14 @@ export default async function UploadPage() {
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Update dashboard data</h1>
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
             Upload the latest export of the LINKS air-freight sheet (Excel, CSV or TSV). The system
-            extracts every AWB, cleans dates and flight routings, merges duplicate rows and
-            recalculates all dashboard figures instantly. Every upload is stored as a version you can
-            roll back to from the admin panel.
+            first analyses the file — extracting every AWB, cleaning dates and flight routings,
+            merging duplicates and running an AI review of any data warnings — then lets you check
+            and edit the rows before committing. Every commit is stored as a version you can roll
+            back to from the admin panel.
           </p>
         </div>
 
-        <Card className="mb-4 flex-row items-center gap-4 rounded-2xl border-black/[0.06] bg-white p-5 shadow-xs">
+        <Card className="mb-4 flex-row items-center gap-4 rounded-2xl border-ink/[0.12] bg-card p-5 shadow-xs">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-stamp/30 bg-stamp/[0.07]">
             <Database className="h-4 w-4 text-stamp" />
           </div>

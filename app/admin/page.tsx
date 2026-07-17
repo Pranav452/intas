@@ -64,7 +64,7 @@ export default async function AdminPage() {
           </div>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Portal administration</h1>
-            <Button asChild size="sm" className="rounded-full bg-ink px-4 text-white hover:bg-ink/85">
+            <Button asChild size="sm" className="rounded-full bg-ink px-4 text-paper hover:bg-ink/85">
               <Link href="/admin/upload">
                 <UploadCloud className="h-3.5 w-3.5" />
                 Upload new data
@@ -78,15 +78,15 @@ export default async function AdminPage() {
             <span className="text-sm font-medium text-amber-700">Database not connected</span>
             <p className="text-xs leading-relaxed text-muted-foreground">
               Version history, rollback, devices and the IP allowlist need Neon. Set{" "}
-              <code className="rounded bg-black/[0.06] px-1">DATABASE_URL</code> in{" "}
-              <code className="rounded bg-black/[0.06] px-1">.env.local</code>, run{" "}
-              <code className="rounded bg-black/[0.06] px-1">npx tsx scripts/migrate.ts</code>, then restart.
+              <code className="rounded bg-ink/[0.1] px-1">DATABASE_URL</code> in{" "}
+              <code className="rounded bg-ink/[0.1] px-1">.env.local</code>, run{" "}
+              <code className="rounded bg-ink/[0.1] px-1">npx tsx scripts/migrate.ts</code>, then restart.
             </p>
           </Card>
         )}
 
         {/* Live dataset */}
-        <Card className="mb-4 flex-row items-center gap-4 rounded-2xl border-black/[0.06] bg-white p-5 shadow-xs">
+        <Card className="mb-4 flex-row items-center gap-4 rounded-2xl border-ink/[0.12] bg-card p-5 shadow-xs">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-stamp/30 bg-stamp/[0.07]">
             <Database className="h-4 w-4 text-stamp" />
           </div>
@@ -117,7 +117,7 @@ export default async function AdminPage() {
         )}
 
         {/* Versions + rollback */}
-        <Card className="mb-4 gap-4 rounded-2xl border-black/[0.06] bg-white p-6 shadow-xs">
+        <Card className="mb-4 gap-4 rounded-2xl border-ink/[0.12] bg-card p-6 shadow-xs">
           <SectionTitle
             icon={<History />}
             title="Dataset versions"
@@ -131,7 +131,7 @@ export default async function AdminPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-black/[0.06] text-[11px] tracking-wide text-muted-foreground/70 uppercase">
+                  <tr className="border-b border-ink/[0.12] text-[11px] tracking-wide text-muted-foreground/70 uppercase">
                     <th className="py-2 pr-4 font-medium">#</th>
                     <th className="py-2 pr-4 font-medium">Data as of</th>
                     <th className="py-2 pr-4 font-medium">Source</th>
@@ -145,7 +145,7 @@ export default async function AdminPage() {
                 </thead>
                 <tbody>
                   {versions.map((v) => (
-                    <tr key={v.id} className="border-b border-black/[0.04] text-xs transition-colors hover:bg-black/[0.02]">
+                    <tr key={v.id} className="border-b border-ink/[0.08] text-xs transition-colors hover:bg-ink/[0.04]">
                       <td className="py-2.5 pr-4 font-mono text-muted-foreground">{v.id}</td>
                       <td className="py-2.5 pr-4 font-medium tabular-nums">{fmtDate(v.as_of)}</td>
                       <td className="max-w-44 truncate py-2.5 pr-4 text-muted-foreground">{v.source}</td>
@@ -170,7 +170,7 @@ export default async function AdminPage() {
                               type="submit"
                               size="sm"
                               variant="outline"
-                              className="h-7 rounded-full border-black/[0.12] bg-white px-3 text-[11px] shadow-xs hover:bg-black/[0.03]"
+                              className="h-7 rounded-full border-ink/[0.25] bg-card px-3 text-[11px] shadow-xs hover:bg-ink/[0.06]"
                             >
                               Roll back to this
                             </Button>
@@ -193,12 +193,12 @@ export default async function AdminPage() {
               {ipRequests.map((r) => (
                 <div
                   key={r.id}
-                  className="flex flex-col gap-2 rounded-xl border border-black/[0.06] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-2 rounded-xl border border-ink/[0.12] bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-2 text-xs">
                       <span className="font-medium">{r.username}</span>
-                      <code className="rounded bg-black/[0.05] px-1.5 py-0.5 text-[11px]">{r.ip}</code>
+                      <code className="rounded bg-ink/[0.08] px-1.5 py-0.5 text-[11px]">{r.ip}</code>
                       <span className="text-muted-foreground">
                         {new Date(r.requested_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
                       </span>
@@ -212,7 +212,7 @@ export default async function AdminPage() {
                     <form action={resolveIpRequestAction}>
                       <input type="hidden" name="id" value={r.id} />
                       <input type="hidden" name="action" value="approve" />
-                      <Button type="submit" size="sm" className="h-7 rounded-full bg-ink px-3 text-[11px] text-white hover:bg-ink/85">
+                      <Button type="submit" size="sm" className="h-7 rounded-full bg-ink px-3 text-[11px] text-paper hover:bg-ink/85">
                         Approve
                       </Button>
                     </form>
@@ -237,7 +237,7 @@ export default async function AdminPage() {
 
         <div className="mb-4 grid gap-4 lg:grid-cols-2">
           {/* IP allowlist */}
-          <Card className="gap-4 rounded-2xl border-black/[0.06] bg-white p-6 shadow-xs">
+          <Card className="gap-4 rounded-2xl border-ink/[0.12] bg-card p-6 shadow-xs">
             <SectionTitle
               icon={<Network />}
               title="Allowed networks"
@@ -245,13 +245,13 @@ export default async function AdminPage() {
             />
             <p className="text-[11px] leading-relaxed text-muted-foreground/70">
               Applies to <span className="text-foreground/80">client</span> sign-ins. Exact IP, or a prefix ending
-              with a dot (e.g. <code className="rounded bg-black/[0.05] px-1">196.223.11.</code>). Localhost and
+              with a dot (e.g. <code className="rounded bg-ink/[0.08] px-1">196.223.11.</code>). Localhost and
               admin logins are always allowed. Your current IP:{" "}
-              <code className="rounded bg-black/[0.05] px-1">{identity.ip}</code>
+              <code className="rounded bg-ink/[0.08] px-1">{identity.ip}</code>
             </p>
             <div className="flex flex-col gap-1.5">
               {ips.map((r) => (
-                <div key={r.id} className="flex items-center gap-3 rounded-xl border border-black/[0.05] bg-black/[0.02] px-3 py-2">
+                <div key={r.id} className="flex items-center gap-3 rounded-xl border border-ink/[0.1] bg-ink/[0.04] px-3 py-2">
                   <code className="text-xs">{r.ip}</code>
                   <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground/60">{r.label}</span>
                   <form action={deleteAllowedIp}>
@@ -274,14 +274,14 @@ export default async function AdminPage() {
                   name="ip"
                   required
                   placeholder="IP or prefix. (e.g. 103.120.45.10)"
-                  className="h-9 flex-1 rounded-full border-black/[0.1] bg-white text-xs shadow-xs"
+                  className="h-9 flex-1 rounded-full border-ink/[0.2] bg-card text-xs shadow-xs"
                 />
                 <Input
                   name="label"
                   placeholder="Label (INTAS office)"
-                  className="h-9 flex-1 rounded-full border-black/[0.1] bg-white text-xs shadow-xs"
+                  className="h-9 flex-1 rounded-full border-ink/[0.2] bg-card text-xs shadow-xs"
                 />
-                <Button type="submit" size="sm" className="h-9 rounded-full bg-ink px-4 text-xs text-white hover:bg-ink/85">
+                <Button type="submit" size="sm" className="h-9 rounded-full bg-ink px-4 text-xs text-paper hover:bg-ink/85">
                   Allow IP
                 </Button>
               </form>
@@ -289,7 +289,7 @@ export default async function AdminPage() {
           </Card>
 
           {/* Devices */}
-          <Card className="gap-4 rounded-2xl border-black/[0.06] bg-white p-6 shadow-xs">
+          <Card className="gap-4 rounded-2xl border-ink/[0.12] bg-card p-6 shadow-xs">
             <SectionTitle icon={<Fingerprint />} title="Registered devices" hint={`${devices.length} of 3 slots`} />
             <p className="text-[11px] leading-relaxed text-muted-foreground/70">
               Client logins are trust-on-first-use: the first 3 devices register automatically, any further device is
@@ -298,7 +298,7 @@ export default async function AdminPage() {
             <div className="flex flex-col gap-1.5">
               {devices.length === 0 && <p className="text-xs text-muted-foreground">No devices registered yet.</p>}
               {devices.map((d) => (
-                <div key={d.id} className="flex items-center gap-3 rounded-xl border border-black/[0.05] bg-black/[0.02] px-3 py-2">
+                <div key={d.id} className="flex items-center gap-3 rounded-xl border border-ink/[0.1] bg-ink/[0.04] px-3 py-2">
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-xs">
                       <code className="text-muted-foreground">{d.id.slice(0, 8)}</code> · {d.ip}
@@ -326,12 +326,12 @@ export default async function AdminPage() {
         </div>
 
         {/* Access log */}
-        <Card className="gap-4 rounded-2xl border-black/[0.06] bg-white p-6 shadow-xs">
+        <Card className="gap-4 rounded-2xl border-ink/[0.12] bg-card p-6 shadow-xs">
           <SectionTitle icon={<ScrollText />} title="Access log" hint="latest 30 events" />
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-black/[0.06] text-[11px] tracking-wide text-muted-foreground/70 uppercase">
+                <tr className="border-b border-ink/[0.12] text-[11px] tracking-wide text-muted-foreground/70 uppercase">
                   <th className="py-2 pr-4 font-medium">Time</th>
                   <th className="py-2 pr-4 font-medium">Event</th>
                   <th className="py-2 pr-4 font-medium">User</th>
@@ -340,7 +340,7 @@ export default async function AdminPage() {
               </thead>
               <tbody>
                 {log.map((row, i) => (
-                  <tr key={i} className="border-b border-black/[0.04] text-xs">
+                  <tr key={i} className="border-b border-ink/[0.08] text-xs">
                     <td className="py-2 pr-4 whitespace-nowrap text-muted-foreground tabular-nums">
                       {new Date(row.ts).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "medium" })}
                     </td>

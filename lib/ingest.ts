@@ -125,6 +125,80 @@ function sheetYear(name: string, defaultYear: number): number {
   return m ? 2000 + Number(m[1]) : defaultYear
 }
 
+/**
+ * Re-normalise rows after the uploader edits them in the preview grid:
+ * destinations re-canonicalised, legs re-parsed from the (possibly edited)
+ * flight-details text, numbers coerced, AWB format and dates re-validated.
+ * Returns fresh validation warnings.
+ */
+export function renormalize(rows: Shipment[]): { shipments: Shipment[]; warnings: string[] } {
+  const warnings: string[] = []
+  const shipments: Shipment[] = []
+  for (const r of rows) {
+    const awb = cellStr(r.awb)
+    if (!awb || awb.replace(/\D/g, "").length < 8) {
+      warnings.push(`Row dropped: "${awb || "—"}" is not a valid AWB number.`)
+      continue
+    }
+
+    const fallbackYear = /^\d{4}/.test(String(r.awbDate ?? "")) ? Number(String(r.awbDate).slice(0, 4)) : new Date().getFullYear()
+    const awbDate = /^\d{4}-\d{2}-\d{2}$/.test(String(r.awbDate ?? "")) ? r.awbDate : parseDate(r.awbDate, fallbackYear)
+    if (!awbDate) {
+      warnings.push(`AWB ${awb}: AWB date "${r.awbDate}" is not parseable — row dropped.`)
+      continue
+    }
+
+    const canon = canonDestination(cellStr(r.destination))
+    if (canon && !DESTINATIONS[canon]) {
+      warnings.push(`AWB ${awb}: destination "${canon}" still has no airport mapping — won't plot on the globe.`)
+    }
+
+    // legs re-parsed from the (possibly edited) FLIGHT DETAILS text — same
+    // parser parseWorkbook uses, year of the AWB date as fallback
+    const raw = cellStr(String(r.flightDetailsRaw ?? ""))
+    const legs = raw ? parseLegs(raw, Number(awbDate.slice(0, 4))) : r.legs
+
+    const date = (r.date && /^\d{4}-\d{2}-\d{2}$/.test(r.date) ? r.date : parseDate(r.date, fallbackYear)) ?? awbDate
+    const etd = r.etd && /^\d{4}-\d{2}-\d{2}$/.test(r.etd) ? r.etd : parseDate(r.etd, fallbackYear)
+    const eta = r.eta && /^\d{4}-\d{2}-\d{2}$/.test(r.eta) ? r.eta : parseDate(r.eta, fallbackYear)
+
+    const pkgs = Math.round(cellNum(r.pkgs))
+    const grossWt = cellNum(r.grossWt)
+    const chargeableWt = cellNum(r.chargeableWt)
+
+    // re-run the implausible-weight check — the uploader may have fixed
+    // (or introduced) the bad pair, so the flag must be recomputed
+    let flag: string | undefined
+    let excludeFromWeights: boolean | undefined
+    if (grossWt > 0 && chargeableWt > 0 && chargeableWt < grossWt / 10) {
+      flag = `Weight pair implausible in sheet (gross ${grossWt} / chg ${chargeableWt}) — excluded from weight totals`
+      excludeFromWeights = true
+      warnings.push(`AWB ${awb}: ${flag.toLowerCase()}.`)
+    }
+
+    shipments.push({
+      ...r,
+      awb,
+      date,
+      awbDate,
+      destination: canon,
+      consignee: cellStr(r.consignee).toUpperCase(),
+      airline: cellStr(r.airline).toUpperCase().slice(0, 2),
+      pkgs,
+      grossWt,
+      chargeableWt,
+      legs,
+      etd,
+      eta,
+      flightDetailsRaw: raw || null,
+      flag,
+      excludeFromWeights,
+    })
+  }
+  shipments.sort((a, b) => a.awbDate.localeCompare(b.awbDate) || a.sr - b.sr)
+  return { shipments, warnings }
+}
+
 export function parseWorkbook(buffer: Buffer | ArrayBuffer, defaultYear: number): IngestResult {
   const wb = XLSX.read(buffer, {
     type: buffer instanceof ArrayBuffer ? "array" : "buffer",
@@ -283,6 +357,8 @@ export function parseWorkbook(buffer: Buffer | ArrayBuffer, defaultYear: number)
         sbNos: C.sbNo >= 0 ? splitList(cellStr(row[C.sbNo])) : [],
         sbDate: C.sbDate >= 0 ? parseDate(row[C.sbDate], fallbackYear) : null,
         remark: C.remark >= 0 ? cellStr(row[C.remark]) || null : null,
+        // keep the sheet's FLIGHT DETAILS text verbatim for the expanded row view
+        flightDetailsRaw: C.flights >= 0 ? String(row[C.flights] ?? "").trim() || null : null,
         ...(flag ? { flag, excludeFromWeights } : {}),
       })
     }

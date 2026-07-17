@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverActions: {
+      // stage-2 commit round-trips the full edited dataset as JSON
+      bodySizeLimit: "10mb",
+    },
+  },
 };
 
 export default nextConfig;

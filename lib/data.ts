@@ -33,6 +33,8 @@ export interface Shipment {
   sbNos: string[]
   sbDate: string | null
   remark: string | null
+  /** the FLIGHT DETAILS cell exactly as written in the sheet (all legs, raw) */
+  flightDetailsRaw?: string | null
   /** data-quality note carried from the source sheet, shown in the table */
   flag?: string
   /** true when the sheet's weight pair is implausible — row stays in counts but out of weight totals */

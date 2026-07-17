@@ -39,6 +39,11 @@ export default async function DashboardPage({
     originCities.length > 1
       ? `${originCities.slice(0, -1).join(", ")} and ${originCities.at(-1)}`
       : (originCities[0] ?? "India")
+  const firstDate = stats.withStatus.reduce<string | null>(
+    (min, s) => (min === null || s.awbDate < min ? s.awbDate : min),
+    null,
+  )
+  const firstMonthLabel = firstDate ? fmtDateShort(firstDate).slice(3) + " " + firstDate.slice(2, 4) : "—"
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -54,23 +59,18 @@ export default async function DashboardPage({
               </Kicker>
               <PeriodFilter periods={periods} year={period.year} month={period.month} />
             </div>
+            {/* Network reach as the headline — volumes stay off the lede by request */}
             <div className="mt-3 font-serif text-7xl leading-[0.9] font-bold tracking-tight tabular-nums sm:text-8xl lg:text-9xl">
-              {fmt(t.chargeableWt)}
+              {t.destinations}
               <span className="ml-3 align-middle font-serif text-2xl font-normal text-muted-foreground">
-                kg chargeable
+                airports · {countries} countries
               </span>
             </div>
             <p className="mt-6 max-w-[60ch] font-serif text-[17px] leading-[1.75] text-ink/85">
               {fmt(t.shipments)} air waybills lifted out of {originSentence} for {t.consignees}{" "}
-              pharmaceutical consignees — {fmt(t.pkgs)} packages weighing {fmt(t.grossWt)} kg gross,
-              routed via {hubSentence} to {t.destinations} airports across {countries} countries.{" "}
-              {t.egmPending > 0 ? (
-                <>
-                  <span className="font-semibold text-stamp">{t.egmPending} manifests</span> await EGM filing.
-                </>
-              ) : (
-                "All export manifests are filed."
-              )}
+              pharmaceutical consignees, routed via {hubSentence} to {t.destinations} airports across{" "}
+              {countries} countries — every booking, flight leg and customs filing written up in one
+              ledger by LINKS.
             </p>
           </div>
 
@@ -78,7 +78,7 @@ export default async function DashboardPage({
             {[
               { v: fmt(t.shipments), l: "Shipments · AWB" },
               { v: fmt(t.pkgs), l: "Packages" },
-              { v: `${t.destinations}`, l: "Destination airports" },
+              { v: `${t.consignees}`, l: "Consignees" },
               { v: `${t.avgTransitDays} d`, l: "Average transit" },
             ].map((f) => (
               <div key={f.l}>
@@ -86,17 +86,13 @@ export default async function DashboardPage({
                 <div className="text-[10px] tracking-[0.22em] text-muted-foreground uppercase">{f.l}</div>
               </div>
             ))}
-            <div>
-              <div className="font-serif text-4xl font-bold text-stamp tabular-nums">{t.egmPending}</div>
-              <div className="text-[10px] tracking-[0.22em] text-stamp/80 uppercase">EGM pending</div>
-            </div>
           </div>
         </div>
 
         {/* Figures band */}
         <div className="grid grid-cols-2 divide-x divide-rule border-b border-rule sm:grid-cols-4 lg:grid-cols-8">
           {[
-            { v: fmt(t.grossWt), l: "Gross kg" },
+            { v: firstMonthLabel, l: "Records since" },
             { v: fmt(t.invoices), l: "Invoices" },
             { v: `${t.consignees}`, l: "Consignees" },
             { v: `${stats.byAirline.length}`, l: "Carriers" },

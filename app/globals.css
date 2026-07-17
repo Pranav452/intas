@@ -69,6 +69,34 @@
   --ring: var(--stamp);
 }
 
+/* Night edition — same ledger, printed on dark stock. Toggled via next-themes. */
+.dark {
+  color-scheme: dark;
+  --paper: oklch(0.185 0.009 80);
+  --ink: oklch(0.9 0.012 85);
+  --stamp: oklch(0.68 0.18 38);
+  --rule: oklch(0.33 0.012 80);
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: oklch(0.225 0.009 80);
+  --card-foreground: var(--ink);
+  --popover: oklch(0.225 0.009 80);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: oklch(0.27 0.009 80);
+  --secondary-foreground: var(--ink);
+  --muted: oklch(0.27 0.009 80);
+  --muted-foreground: oklch(0.63 0.012 82);
+  --accent: oklch(0.27 0.009 80);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.64 0.19 25);
+  --destructive-foreground: var(--paper);
+  --border: oklch(0.9 0.012 85 / 18%);
+  --input: oklch(0.9 0.012 85 / 26%);
+  --ring: var(--stamp);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
